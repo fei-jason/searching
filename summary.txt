@@ -1,3 +1,0 @@
-Breadth First Search
-Path cost: 0
-Nodes expanded: 0

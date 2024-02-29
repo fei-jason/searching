@@ -5,9 +5,20 @@ import matplotlib.animation as animation
 import math
 from shapely import geometry
 
+import cProfile
+
 from utils import *
 from grid import *
- 
+
+def reset_grid():
+    for x in range(50):
+        for y in range(50):
+            Point(x, y).reset_state
+
+def reset_node(source, dest):
+    source.reset_state()
+    dest.reset_state()
+
 def gen_polygons(worldfilepath):
     polygons = []
     with open(worldfilepath, "r") as f:
@@ -22,11 +33,12 @@ def gen_polygons(worldfilepath):
             polygons.append(polygon)
     return polygons
 
-def print_to_summary(name, total_cost, nodes_expanded):
-    with open("summary.txt", "w") as f:
-        f.write(f"{name}\n")
+method_counters = {"BFS" : 0, "DFS" : 0, "GBFS" : 0, "A*" : 0}
+def print_to_summary(key, total_cost, nodes_expanded):
+    with open("summary.txt", "a") as f:
+        f.write(f"Name: {key}{method_counters[key]}\n")
         f.write(f"Path cost: {str(total_cost)}\n" )
-        f.write(f"Nodes expanded: {nodes_expanded}\n")
+        f.write(f"Nodes expanded: {nodes_expanded}\n\n")
 
 def distance(p1, p2):
     return math.sqrt((p2.x - p1.x)**2 + (p2.y - p1.y)**2)
@@ -80,14 +92,15 @@ def actions_bfs_dfs(point, dest, enc_vertices, explored):
 
 # breadth first search implementation taking a source point, destination point, and the enclosed polygons
 def breadth_first_search(source, dest, enc_vertices):
-    name = "Breadth First Search"
+    key = "BFS"
+    method_counters[key] += 1
     nodes_expanded = 0
     node = source
     node.heuristic = distance(source, dest)
 
     # return here
     if source.__eq__(dest):
-        print_to_summary(name, 0, nodes_expanded)
+        print_to_summary(key, 0, nodes_expanded)
         return reconstruct_solution_path(node)
 
     frontier = Queue()
@@ -100,7 +113,7 @@ def breadth_first_search(source, dest, enc_vertices):
             return False
         
         node = frontier.pop()
-        print(f"{nodes_expanded}")
+        #print(f"{nodes_expanded}")
         nodes_expanded += 1
 
         actions = actions_bfs_dfs(node, dest, enc_vertices, explored)
@@ -111,7 +124,7 @@ def breadth_first_search(source, dest, enc_vertices):
             if child not in explored or frontier:
                 if child.__eq__(dest):
                     SOLUTION = reconstruct_solution_path(child)
-                    print_to_summary(name, len(SOLUTION)-1, nodes_expanded)
+                    print_to_summary(key, len(SOLUTION)-1, nodes_expanded)
                     return SOLUTION
                 frontier.push(child)
             # each child should also be marked as visited
@@ -119,14 +132,15 @@ def breadth_first_search(source, dest, enc_vertices):
 
 # depth first search implementation taking a source point, destination point, and the enclosed polygons
 def depth_first_search(source, dest, enc_vertices):
-    name = "Depth First Search"
+    key = "DFS"
+    method_counters[key] += 1
     nodes_expanded = 0
     node = source
     node.heuristic = distance(source, dest)
 
     # return here
     if source.__eq__(dest):
-        print_to_summary(name, 0, nodes_expanded)
+        print_to_summary(key, 0, nodes_expanded)
         return reconstruct_solution_path(node)
 
     frontier = Stack()
@@ -150,7 +164,7 @@ def depth_first_search(source, dest, enc_vertices):
             if child not in explored or frontier:
                 if child.__eq__(dest):
                     SOLUTION = reconstruct_solution_path(child)
-                    print_to_summary(name, len(SOLUTION)-1, nodes_expanded)
+                    print_to_summary(key, len(SOLUTION)-1, nodes_expanded)
                     return SOLUTION
                 frontier.push(child)
             # each child should also be marked as visited
@@ -158,14 +172,15 @@ def depth_first_search(source, dest, enc_vertices):
 
 # Greedy Best-First Search implementation taking a source point, destination point, and the enclosed polygons
 def greedy_bfs(source, dest, enc_vertices):
-    name = "Breadth First Search"
+    key = "GBFS"
+    method_counters[key] += 1
     nodes_expanded = 0
     node = source
     node.heuristic = distance(source, dest)
 
     # return here
     if source.__eq__(dest):
-        print_to_summary(name, 0, nodes_expanded)
+        print_to_summary(key, 0, nodes_expanded)
         return reconstruct_solution_path(node)
 
     frontier = PriorityQueue()
@@ -189,7 +204,7 @@ def greedy_bfs(source, dest, enc_vertices):
             if child not in explored or frontier:
                 if child.__eq__(dest):
                     SOLUTION = reconstruct_solution_path(child)
-                    print_to_summary(name, len(SOLUTION), nodes_expanded)
+                    print_to_summary(key, len(SOLUTION), nodes_expanded)
                     return SOLUTION
                 frontier.push(child, child.heuristic)
             # each child should also be marked as visited
@@ -204,11 +219,14 @@ if __name__ == "__main__":
     #dest = Point(28,20)
 
     source = Point(8,10)
-    #dest = Point(43,45)
-    dest = Point(8,10)
+    dest = Point(43,45)
+
+    source_copy = source
+    dest_copy = dest
+    #dest = Point(8,10)
 
     enc_polygons = []
-    tur_polygons = []
+    turf_polygons = []
 
     fig, ax = draw_board()
     draw_grids(ax)
@@ -237,16 +255,74 @@ if __name__ == "__main__":
             draw_green_line(ax, [polygon[i].x, polygon[(i+1)%len(polygon)].x], [polygon[i].y, polygon[(i+1)%len(polygon)].y])
 
     #### Here call your search to compute and collect res_path
-    #res_path = breadth_first_search(source, dest, enc_polygons)
-    #res_path = depth_first_search(source, dest, enc_polygons)
-    res_path = greedy_bfs(source, dest, enc_polygons)
+    
+    def show_plot(res_path):
+        for i in range(len(res_path)-1):
+            draw_result_line(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
+            plt.pause(0.01)
+    
+    def clear_plot(res_path):
+        for i in range(len(res_path)-1):
+            draw_result_white(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
+            clear_result_line(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
+            
+
+    #add more menu here!
+    menu = ["1. Breadth First Search", 
+            "2. Depth First Search",
+            "3. Greedy Best-First Search",
+            "4. A* Search",
+            "5. Run All",
+            "0. Quit"
+            ]
+
+    exit_flag = False
+    while not exit_flag:
+        try:
+            print("Please enter an option: (Please keep resulting window open)")
+            print(*menu, sep="\n")
+            user_input = int(input())
+            res_path = None
+            match user_input:
+                case 1:
+                    res_path = breadth_first_search(source, dest, enc_polygons)
+                    show_plot(res_path)
+                case 2:
+                    res_path = depth_first_search(source, dest, enc_polygons)
+                    show_plot(res_path)
+                case 3:
+                    res_path = greedy_bfs(source, dest, enc_polygons)
+                    show_plot(res_path)
+                case 5:
+                    print("will crash the plot lol, prints everything into summary")
+                    # jank fix to not crash
+                    res_path = [Point(0, 0)]
+                    breadth_first_search(source, dest, enc_polygons)
+                    reset_node(source, dest)
+                    reset_grid()
+                    depth_first_search(source, dest, enc_polygons)
+                    reset_node(source, dest)
+                    reset_grid()
+                    greedy_bfs(source, dest, enc_polygons)
+                    reset_node(source, dest)
+                    reset_grid()
+                case 0:
+                    exit_flag = True
+                    res_path = [Point(0, 0)]
+                case _:
+                    print("Invalid option. Please try again.\n")
+
+            reset_node(source, dest)
+            reset_grid()
+            clear_plot(res_path)
+        except ValueError:
+            print("Please enter a valid integer.\n")        
+    
 
     # res_path = [Point(24,17), Point(25,17), Point(26,17), Point(27,17),  
     #             Point(28,17), Point(28,18), Point(28,19), Point(28,20)]
-
-    for i in range(len(res_path)-1):
-        draw_result_line(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
-        plt.pause(0.00001)
-
-    
+    # if not exit_flag:
+    #     for i in range(len(res_path)-1):
+    #         draw_result_line(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
+    #         plt.pause(0.00001)
     plt.show()

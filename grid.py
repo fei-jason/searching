@@ -28,6 +28,11 @@ class Point:
         for child in children:
             child.parent = self
             self.children.append(child)
+    
+    def reset_state(self):
+        self.children = []
+        self.parent = None
+        self.heuristic = 0
 
 def draw_board():
     # create a figure to draw the board
@@ -85,3 +90,9 @@ def draw_result_line(ax, xs, ys):
 
 def draw_green_line(ax, xs, ys):
     ax.plot(xs, ys, color='g')
+
+def clear_result_line(ax, xs, ys):
+    ax.plot(xs, ys, color = '0.75', linestyle='dotted')
+
+def draw_result_white(ax, xs, ys):
+    ax.plot(xs, ys, color ="white")
