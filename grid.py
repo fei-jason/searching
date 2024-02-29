@@ -29,9 +29,6 @@ class Point:
             child.parent = self
             self.children.append(child)
 
-    def get_children(self):
-        return self.children
-
 def draw_board():
     # create a figure to draw the board
     fig = plt.figure(figsize=[8,8])
