@@ -82,19 +82,17 @@ def actions_bfs_dfs(point, dest, enc_vertices, explored):
 def breadth_first_search(source, dest, enc_vertices):
     name = "Breadth First Search"
     nodes_expanded = 0
-    path_cost = 0
     node = source
     node.heuristic = distance(source, dest)
 
     # return here
     if source.__eq__(dest):
-        print_to_summary(name, path_cost, nodes_expanded)
+        print_to_summary(name, 0, nodes_expanded)
         return reconstruct_solution_path(child)
 
     frontier = Queue()
     explored = [] # i couldn't use a set bc Point isn't iterable
     frontier.push(node) 
-    explored.append(node)
 
     while True:
         if frontier.isEmpty():
@@ -102,7 +100,7 @@ def breadth_first_search(source, dest, enc_vertices):
             return False
         
         node = frontier.pop()
-        #print(f"{nodes_expanded}")
+        print(f"{nodes_expanded}")
         nodes_expanded += 1
 
         actions = actions_bfs_dfs(node, dest, enc_vertices, explored)
@@ -110,31 +108,30 @@ def breadth_first_search(source, dest, enc_vertices):
         explored.append(node)
 
         for child in node.children:
-            if child.__eq__(dest):
-                SOLUTION = reconstruct_solution_path(child)
-                print_to_summary(name, len(SOLUTION)-1, nodes_expanded)
-                return SOLUTION
-            elif child not in explored:
+            if child not in explored or frontier:
+                if child.__eq__(dest):
+                    SOLUTION = reconstruct_solution_path(child)
+                    print_to_summary(name, len(SOLUTION)-1, nodes_expanded)
+                    return SOLUTION
                 frontier.push(child)
+            # each child should also be marked as visited
             explored.append(child)
 
 # depth first search implementation taking a source point, destination point, and the enclosed polygons
 def depth_first_search(source, dest, enc_vertices):
     name = "Depth First Search"
     nodes_expanded = 0
-    path_cost = 0
     node = source
     node.heuristic = distance(source, dest)
 
     # return here
     if source.__eq__(dest):
-        print_to_summary(name, path_cost, nodes_expanded)
+        print_to_summary(name, 0, nodes_expanded)
         return reconstruct_solution_path(child)
 
     frontier = Stack()
     explored = [] # i couldn't use a set bc Point isn't iterable
     frontier.push(node) 
-    explored.append(node)
 
     while True:
         if frontier.isEmpty():
@@ -150,31 +147,30 @@ def depth_first_search(source, dest, enc_vertices):
         explored.append(node)
 
         for child in node.children:
-            if child.__eq__(dest):
-                SOLUTION = reconstruct_solution_path(child)
-                print_to_summary(name, len(SOLUTION)-1, nodes_expanded)
-                return SOLUTION
-            elif child not in explored:
+            if child not in explored or frontier:
+                if child.__eq__(dest):
+                    SOLUTION = reconstruct_solution_path(child)
+                    print_to_summary(name, len(SOLUTION)-1, nodes_expanded)
+                    return SOLUTION
                 frontier.push(child)
+            # each child should also be marked as visited
             explored.append(child)
 
 # Greedy Best-First Search implementation taking a source point, destination point, and the enclosed polygons
 def greedy_bfs(source, dest, enc_vertices):
     name = "Breadth First Search"
     nodes_expanded = 0
-    path_cost = 0
     node = source
     node.heuristic = distance(source, dest)
 
     # return here
     if source.__eq__(dest):
-        print_to_summary(name, path_cost, nodes_expanded)
+        print_to_summary(name, 0, nodes_expanded)
         return reconstruct_solution_path(child)
 
     frontier = PriorityQueue()
     explored = [] # i couldn't use a set bc Point isn't iterable
     frontier.push(node, node.heuristic)
-    explored.append(node)
 
     while True:
         if frontier.isEmpty():
@@ -190,13 +186,15 @@ def greedy_bfs(source, dest, enc_vertices):
         explored.append(node)
 
         for child in node.children:
-            if child.__eq__(dest):
-                SOLUTION = reconstruct_solution_path(child)
-                print_to_summary(name, len(SOLUTION)-1, nodes_expanded)
-                return SOLUTION
-            elif child not in explored:
+            if child not in explored or frontier:
+                if child.__eq__(dest):
+                    SOLUTION = reconstruct_solution_path(child)
+                    print_to_summary(name, len(SOLUTION), nodes_expanded)
+                    return SOLUTION
                 frontier.push(child, child.heuristic)
-            explored.append(child)
+            # each child should also be marked as visited
+            explored.append(child)      
+            
 
 if __name__ == "__main__":
     epolygons = gen_polygons('TestingGrid/world1_enclosures.txt')
