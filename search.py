@@ -88,7 +88,7 @@ def breadth_first_search(source, dest, enc_vertices):
     # return here
     if source.__eq__(dest):
         print_to_summary(name, 0, nodes_expanded)
-        return reconstruct_solution_path(child)
+        return reconstruct_solution_path(node)
 
     frontier = Queue()
     explored = [] # i couldn't use a set bc Point isn't iterable
@@ -127,7 +127,7 @@ def depth_first_search(source, dest, enc_vertices):
     # return here
     if source.__eq__(dest):
         print_to_summary(name, 0, nodes_expanded)
-        return reconstruct_solution_path(child)
+        return reconstruct_solution_path(node)
 
     frontier = Stack()
     explored = [] # i couldn't use a set bc Point isn't iterable
@@ -166,7 +166,7 @@ def greedy_bfs(source, dest, enc_vertices):
     # return here
     if source.__eq__(dest):
         print_to_summary(name, 0, nodes_expanded)
-        return reconstruct_solution_path(child)
+        return reconstruct_solution_path(node)
 
     frontier = PriorityQueue()
     explored = [] # i couldn't use a set bc Point isn't iterable
@@ -202,8 +202,10 @@ if __name__ == "__main__":
 
     #source = Point(24,17)
     #dest = Point(28,20)
+
     source = Point(8,10)
-    dest = Point(43,45)
+    #dest = Point(43,45)
+    dest = Point(8,10)
 
     enc_polygons = []
     tur_polygons = []

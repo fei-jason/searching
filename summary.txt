@@ -1,3 +1,3 @@
 Breadth First Search
-Path cost: 85
-Nodes expanded: 100
+Path cost: 0
+Nodes expanded: 0
