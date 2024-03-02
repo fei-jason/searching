@@ -50,3 +50,27 @@ Name: BFS1
 Path cost: 82
 Nodes expanded: 2016
 
+Name: A*1
+Path cost: 89.0
+Nodes expanded: 103
+
+Name: A*1
+Path cost: 89.0
+Nodes expanded: 133
+
+Name: BFS1
+Path cost: 82
+Nodes expanded: 2016
+
+Name: A*1
+Path cost: 89.0
+Nodes expanded: 133
+
+Name: GBFS1
+Path cost: 84
+Nodes expanded: 102
+
+Name: GBFS1
+Path cost: 94.0
+Nodes expanded: 102
+

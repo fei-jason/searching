@@ -17,6 +17,12 @@ def reset_node(source, dest):
     source.reset_state()
     dest.reset_state()
 
+def best_cost(cost, frontier):
+    for node in frontier:
+        if (cost <= node.cost):
+            return True
+    return False
+
 def gen_polygons(worldfilepath):
     polygons = []
     with open(worldfilepath, "r") as f:
@@ -30,12 +36,6 @@ def gen_polygons(worldfilepath):
                 polygon.append(Point(int(xy[0]), int(xy[1])))
             polygons.append(polygon)
     return polygons
-
-def best_cost (cost, frontier):
-    for node in frontier:
-        if (cost <= node.cost):
-            return True
-    return False
 
 method_counters = {"BFS" : 0, "DFS" : 0, "GBFS" : 0, "A*" : 0}
 def print_to_summary(key, total_cost, nodes_expanded):
@@ -74,6 +74,8 @@ def is_enclosed(point, polygon_list):
             return True
     return False
 
+# actions for each searching algorithm
+# set a_star=True when using A* algorithm
 def search_actions(point, dest, enc_vertices, explored, a_star, turf_vertices):
     children = []
     
@@ -85,7 +87,9 @@ def search_actions(point, dest, enc_vertices, explored, a_star, turf_vertices):
 
         if is_enclosed(child_node, enc_vertices) or child_node in explored:  #skip the actions already done
             continue
-
+        
+        # this line requires all algorithms to enter turf_vertices whether or not they need path cost
+        # the solution was to add a seperate check on the path cost calculation so that if we need path cost with turfs, it will always exist
         if is_enclosed(child_node, turf_vertices):
             child_node.inside = True
 
@@ -190,8 +194,6 @@ def depth_first_search(source, dest, enc_vertices, turf_vertices):
                 frontier.push(child)
                 explored.append(child)
                 
-
-
 # Greedy Best-First Search implementation taking a source point, destination point, and the enclosed polygons
 def greedy_bfs_search(source, dest, enc_vertices, turf_vertices):
     key = "GBFS"
@@ -206,31 +208,28 @@ def greedy_bfs_search(source, dest, enc_vertices, turf_vertices):
         return reconstruct_solution_path(node)
 
     frontier = PriorityQueue()
-    explored = [] # i couldn't use a set bc Point isn't iterable
+    reached = [] # i couldn't use a set bc Point isn't iterable
     frontier.push(node, node.heuristic)
 
-    while True:
-        if frontier.isEmpty():
-            #failure
-            return False
-        
+    while not frontier.isEmpty():        
         node = frontier.pop()
         #print(f"{nodes_expanded}")
         nodes_expanded += 1
 
-        actions = search_actions(node, dest, enc_vertices, explored, False, turf_vertices)
+        if node.__eq__(dest):
+            SOLUTION, path_cost = reconstruct_solution_path(node, True)
+            print_to_summary(key, path_cost, nodes_expanded)
+            return SOLUTION
+        
+        actions = search_actions(node, dest, enc_vertices, reached, False, turf_vertices)
         node.set_children(actions)
-        explored.append(node)
+        #explored.append(node)
 
         for child in node.children:
-            if child not in explored or child not in frontier and best_cost(child.heuristic, frontier):
-                if child.__eq__(dest):
-                    SOLUTION, path_cost = reconstruct_solution_path(child, True)
-                    print_to_summary(key, path_cost, nodes_expanded)
-                    return SOLUTION
+            if child not in reached or best_cost(child.heuristic, reached):
+                reached.append(child)
                 frontier.push(child, child.heuristic)
-            # each child should also be marked as visited
-            explored.append(child)
+
 
 # A* Search implementation taking a source point, destination point, and the enclosed polygons
 def a_star_search(source, dest, enc_vertices, turf_vertices):
@@ -262,14 +261,15 @@ def a_star_search(source, dest, enc_vertices, turf_vertices):
         explored.append(node)
 
         for child in node.children:
-            if child not in explored or child not in frontier and best_cost(child.heuristic, frontier):
+            if child not in explored or child not in frontier:
                 if child.__eq__(dest):
-                    SOLUTION, path_cost = reconstruct_solution_path(child)
+                    SOLUTION, path_cost = reconstruct_solution_path(child, True)
                     print_to_summary(key, path_cost, nodes_expanded)
                     return SOLUTION
                 frontier.push(child, child.heuristic)
-            # each child should also be marked as visited
-            explored.append(child)   
+
+        if not node.__eq__(dest):
+            explored.append(node)
 
 if __name__ == "__main__":
     epolygons = gen_polygons('TestingGrid/world1_enclosures.txt')
