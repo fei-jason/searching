@@ -46,3 +46,7 @@ Name: DFS1
 Path cost: 758
 Nodes expanded: 1241
 
+Name: BFS1
+Path cost: 82
+Nodes expanded: 2016
+

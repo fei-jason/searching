@@ -49,6 +49,7 @@ def distance(p1, p2):
 
 # starts at the end, and keeps grabbing the parent to trace to the big parent
 # solution path should never go inside an enclosed polygon so we can simply count the child.inside without worry
+# set tf = True if you are running searches that require path cost calculation
 def reconstruct_solution_path(node, tf):
     solution_path = []
     path_cost = 0
@@ -61,7 +62,8 @@ def reconstruct_solution_path(node, tf):
         node = node.parent
     solution_path.reverse()
     return solution_path, path_cost-1
-    
+
+# checks for enclosure for both enclosed polygons and turfs
 def is_enclosed(point, polygon_list):
     #print(f"({point.x}, {point.y})")
     point = geometry.Point(point.x, point.y)
@@ -71,16 +73,6 @@ def is_enclosed(point, polygon_list):
         if buffered_enclosure.contains(point) or point.x < 0 or point.x >= 50 or point.y < 0 or point.y >= 50: # the point can also be outside the canvas
             return True
     return False
-
-# def is_turf(point, polygon_list):
-#     #print(f"({point.x}, {point.y})")
-#     point = geometry.Point(point.x, point.y)
-#     for polygon in polygon_list:
-#         enclosure = geometry.Polygon(polygon)
-#         buffered_enclosure = enclosure.buffer(0.2)
-#         if buffered_enclosure.contains(point) or point.x < 0 or point.x >= 50 or point.y < 0 or point.y >= 50: # the point can also be outside the canvas
-#             return True
-#     return False
 
 def search_actions(point, dest, enc_vertices, explored, a_star, turf_vertices):
     children = []
@@ -119,7 +111,7 @@ def search_actions(point, dest, enc_vertices, explored, a_star, turf_vertices):
     return children
 
 # breadth first search implementation taking a source point, destination point, and the enclosed polygons
-def breadth_first_search(source, dest, enc_vertices):
+def breadth_first_search(source, dest, enc_vertices, turf_vertices):
     key = "BFS"
     method_counters[key] += 1
     nodes_expanded = 0
@@ -144,14 +136,14 @@ def breadth_first_search(source, dest, enc_vertices):
         #print(f"{nodes_expanded}")
         nodes_expanded += 1
 
-        actions = search_actions(node, dest, enc_vertices, explored, False, None)
+        actions = search_actions(node, dest, enc_vertices, explored, False, turf_vertices)
         node.set_children(actions)
         explored.append(node)
 
         for child in node.children:
             if child not in explored or child not in frontier:
                 if child.__eq__(dest):
-                    SOLUTION, path_cost = reconstruct_solution_path(child)
+                    SOLUTION, path_cost = reconstruct_solution_path(child, False)
                     print_to_summary(key, path_cost, nodes_expanded)
                     return SOLUTION
                 frontier.push(child)
@@ -193,16 +185,6 @@ def depth_first_search(source, dest, enc_vertices, turf_vertices):
             print_to_summary(key, path_cost, nodes_expanded)
             return SOLUTION
         
-        # for child in node.children:
-        #     if child not in explored or child not in frontier:
-        #         if child.__eq__(dest):
-        #             SOLUTION, path_cost = reconstruct_solution_path(child)
-        #             print_to_summary(key, path_cost, nodes_expanded)
-        #             return SOLUTION
-        #         frontier.push(child)
-        #     # each child should also be marked as visited
-        #     explored.append(child)
-
         for child in node.children:
             if child not in explored or child not in frontier:
                 frontier.push(child)
@@ -243,7 +225,7 @@ def greedy_bfs_search(source, dest, enc_vertices, turf_vertices):
         for child in node.children:
             if child not in explored or child not in frontier and best_cost(child.heuristic, frontier):
                 if child.__eq__(dest):
-                    SOLUTION, path_cost = reconstruct_solution_path(child)
+                    SOLUTION, path_cost = reconstruct_solution_path(child, True)
                     print_to_summary(key, path_cost, nodes_expanded)
                     return SOLUTION
                 frontier.push(child, child.heuristic)
@@ -368,7 +350,7 @@ if __name__ == "__main__":
             res_path = None
             match user_input:
                 case 1:
-                    res_path = breadth_first_search(source, dest, enc_polygons)
+                    res_path = breadth_first_search(source, dest, enc_polygons, turf_polygons)
                     show_plot(res_path)
                 case 2:
                     res_path = depth_first_search(source, dest, enc_polygons, turf_polygons)
@@ -383,7 +365,7 @@ if __name__ == "__main__":
                     print("will crash the plot lol, prints everything into summary")
                     # jank fix to not crash
                     res_path = [Point(0, 0)]
-                    breadth_first_search(source, dest, enc_polygons)
+                    breadth_first_search(source, dest, enc_polygons, turf_polygons)
                     reset_node(source, dest)
                     reset_grid()
                     depth_first_search(source, dest, enc_polygons, turf_polygons)
