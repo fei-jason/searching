@@ -1,76 +1,16 @@
-Name: GBFS1
-Path cost: 94
-Nodes expanded: 353
-
-Name: GBFS1
-Path cost: 94.0
-Nodes expanded: 100
-
-Name: A*1
-Path cost: 89.0
-Nodes expanded: 100
-
-Name: A*1
-Path cost: 89.0
-Nodes expanded: 100
-
-Name: A*1
-Path cost: 91.0
-Nodes expanded: 129
-
-Name: DFS1
-Path cost: 851
-Nodes expanded: 1241
-
-Name: DFS1
-Path cost: 851
-Nodes expanded: 1241
-
-Name: DFS1
-Path cost: 851
-Nodes expanded: 1241
-
-Name: DFS1
-Path cost: 1002
-Nodes expanded: 1641
-
-Name: DFS1
-Path cost: 1002
-Nodes expanded: 1641
-
-Name: DFS1
-Path cost: 851
-Nodes expanded: 1241
+Name: BFS1
+Path cost: 82
+Nodes expanded: 2012
 
 Name: DFS1
 Path cost: 758
-Nodes expanded: 1241
-
-Name: BFS1
-Path cost: 82
-Nodes expanded: 2016
-
-Name: A*1
-Path cost: 89.0
-Nodes expanded: 103
-
-Name: A*1
-Path cost: 89.0
-Nodes expanded: 133
-
-Name: BFS1
-Path cost: 82
-Nodes expanded: 2016
-
-Name: A*1
-Path cost: 89.0
-Nodes expanded: 133
-
-Name: GBFS1
-Path cost: 84
-Nodes expanded: 102
+Nodes expanded: 1239
 
 Name: GBFS1
 Path cost: 94.0
-Nodes expanded: 102
+Nodes expanded: 101
+
+Name: A*1
+Path cost: 85.5
+Nodes expanded: 1650
 

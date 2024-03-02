@@ -11,7 +11,7 @@ from grid import *
 def reset_grid():
     for x in range(50):
         for y in range(50):
-            Point(x, y).reset_state
+            Point(x, y).reset_state()
 
 def reset_node(source, dest):
     source.reset_state()
@@ -69,9 +69,12 @@ def is_enclosed(point, polygon_list):
     point = geometry.Point(point.x, point.y)
     for polygon in polygon_list:
         enclosure = geometry.Polygon(polygon)
-        buffered_enclosure = enclosure.buffer(0.2)
-        if buffered_enclosure.contains(point) or point.x < 0 or point.x >= 50 or point.y < 0 or point.y >= 50: # the point can also be outside the canvas
+        buffered_enclosure = enclosure.buffer(0.25)
+        if buffered_enclosure.contains(point) or enclosure.touches(point):
             return True
+    if point.x < 0 or point.x >= 50 or point.y < 0 or point.y >= 50: # the point can also be outside the canvas
+        return True
+    
     return False
 
 # actions for each searching algorithm
@@ -97,11 +100,7 @@ def search_actions(point, dest, enc_vertices, explored, a_star, turf_vertices):
             # h(n) is straight line distance
             hn = distance(child_node, dest)
             # g(n) is path cost 
-            gn = distance(point, child_node)
-
-            # if inside turf, add the path cost
-            if child_node.inside:
-                gn += 0.5
+            trash, gn = reconstruct_solution_path(point, True)
 
             child_node.parent = point
             child_node.heuristic = hn + gn
@@ -110,7 +109,6 @@ def search_actions(point, dest, enc_vertices, explored, a_star, turf_vertices):
             child_node.heuristic = distance(child_node, dest)
 
         children.append(child_node)
-
 
     return children
 
@@ -134,7 +132,7 @@ def breadth_first_search(source, dest, enc_vertices, turf_vertices):
     while True:
         if frontier.isEmpty():
             #failure
-            return False
+            return SOLUTION, key
         
         node = frontier.pop()
         #print(f"{nodes_expanded}")
@@ -149,7 +147,7 @@ def breadth_first_search(source, dest, enc_vertices, turf_vertices):
                 if child.__eq__(dest):
                     SOLUTION, path_cost = reconstruct_solution_path(child, False)
                     print_to_summary(key, path_cost, nodes_expanded)
-                    return SOLUTION
+                    return SOLUTION, key
                 frontier.push(child)
             # each child should also be marked as visited
             explored.append(child)
@@ -174,7 +172,7 @@ def depth_first_search(source, dest, enc_vertices, turf_vertices):
     while True:
         if frontier.isEmpty():
             #failure
-            return False
+            return SOLUTION, key
         
         node = frontier.pop()
         #print(f"{nodes_expanded}")
@@ -187,7 +185,7 @@ def depth_first_search(source, dest, enc_vertices, turf_vertices):
         if node.__eq__(dest):
             SOLUTION, path_cost = reconstruct_solution_path(node, False)
             print_to_summary(key, path_cost, nodes_expanded)
-            return SOLUTION
+            return SOLUTION, key
         
         for child in node.children:
             if child not in explored or child not in frontier:
@@ -219,7 +217,7 @@ def greedy_bfs_search(source, dest, enc_vertices, turf_vertices):
         if node.__eq__(dest):
             SOLUTION, path_cost = reconstruct_solution_path(node, True)
             print_to_summary(key, path_cost, nodes_expanded)
-            return SOLUTION
+            return SOLUTION, key
         
         actions = search_actions(node, dest, enc_vertices, reached, False, turf_vertices)
         node.set_children(actions)
@@ -229,15 +227,15 @@ def greedy_bfs_search(source, dest, enc_vertices, turf_vertices):
             if child not in reached or best_cost(child.heuristic, reached):
                 reached.append(child)
                 frontier.push(child, child.heuristic)
+    
+    return SOLUTION, key
 
-
-# A* Search implementation taking a source point, destination point, and the enclosed polygons
 def a_star_search(source, dest, enc_vertices, turf_vertices):
     key = "A*"
     method_counters[key] += 1
     nodes_expanded = 0
     node = source
-    node.heuristic = distance(source, dest)
+    node.heuristic = distance(source, dest) # path cost should be 0
 
     # return here
     if source.__eq__(dest):
@@ -245,31 +243,29 @@ def a_star_search(source, dest, enc_vertices, turf_vertices):
         return reconstruct_solution_path(node)
 
     frontier = PriorityQueue()
-    explored = [] # i couldn't use a set bc Point isn't iterable
-    frontier.push(node, node.heuristic)
+    reached = [] # i couldn't use a set bc Point isn't iterable
+    frontier.push(node, distance) # path cost so far is 0
 
-    while True:
-        if frontier.isEmpty():
-            #failure
-            return False
-        
+    while not frontier.isEmpty():        
         node = frontier.pop()
+        #print(f"{nodes_expanded}")
         nodes_expanded += 1
 
-        actions = search_actions(node, dest, enc_vertices, explored, True, turf_vertices)
+        if node.__eq__(dest):
+            SOLUTION, path_cost = reconstruct_solution_path(node, True)
+            print_to_summary(key, path_cost, nodes_expanded)
+            return SOLUTION, key
+        
+        actions = search_actions(node, dest, enc_vertices, reached, True, turf_vertices)
         node.set_children(actions)
-        explored.append(node)
+        #explored.append(node)
 
         for child in node.children:
-            if child not in explored or child not in frontier:
-                if child.__eq__(dest):
-                    SOLUTION, path_cost = reconstruct_solution_path(child, True)
-                    print_to_summary(key, path_cost, nodes_expanded)
-                    return SOLUTION
-                frontier.push(child, child.heuristic)
+            if child not in reached or best_cost(child.heuristic, reached):
+                reached.append(child)
+                frontier.update(child, child.heuristic)
 
-        if not node.__eq__(dest):
-            explored.append(node)
+    return SOLUTION, key
 
 if __name__ == "__main__":
     epolygons = gen_polygons('TestingGrid/world1_enclosures.txt')
@@ -321,22 +317,39 @@ if __name__ == "__main__":
 
     #### Here call your search to compute and collect res_path
     
-    def show_plot(res_path):
-        for i in range(len(res_path)-1):
-            draw_result_line(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
-            plt.pause(0.01)
+    # def show_plot(res_path):
+    #     for i in range(len(res_path)-1):
+    #         draw_result_line(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
+    #         plt.pause(0.01)
     
-    def clear_plot(res_path):
-        for i in range(len(res_path)-1):
-            draw_result_white(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
-            clear_result_line(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
+    # def clear_plot(res_path):
+    #     for i in range(len(res_path)-1):
+    #         draw_result_white(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
+    #         clear_result_line(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
              
 
+    def show_plot(res_path, color, alpha):
+        lines = []
+        for i in range(len(res_path)-1):
+            line = draw_result_line(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y], color, alpha)
+            lines.append(line)
+            plt.pause(0.0001)
+        return lines
+    
+    def clear_plot(lines):
+        for line in lines:
+            line[0].remove()
+        lines.clear()
+
+    def reset_everything(source, dest):
+        reset_node(source, dest)
+        reset_grid()
+
     #add more menu here!
-    menu = ["1. Breadth First Search", 
-            "2. Depth First Search",
-            "3. Greedy Best-First Search",
-            "4. A* Search",
+    menu = ["1. Breadth First Search (red line)", 
+            "2. Depth First Search (blue line)",
+            "3. Greedy Best-First Search (magenta line)",
+            "4. A* Search (orange)",
             "5. Run All",
             "0. Quit"
             ]
@@ -344,45 +357,54 @@ if __name__ == "__main__":
     exit_flag = False
     while not exit_flag:
         try:
-            print("Please enter an option: (Please keep resulting window open)")
+            print("Please enter an option: (Please keep resulting window open to rerun)")
             print(*menu, sep="\n")
             user_input = int(input())
-            res_path = None
+            res_path = [Point(0, 0)]
             match user_input:
                 case 1:
-                    res_path = breadth_first_search(source, dest, enc_polygons, turf_polygons)
-                    show_plot(res_path)
+                    res_path, key = breadth_first_search(source, dest, enc_polygons, turf_polygons)
+                    line = show_plot(res_path, "red", 0.5)
+                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
                 case 2:
-                    res_path = depth_first_search(source, dest, enc_polygons, turf_polygons)
-                    show_plot(res_path)
+                    res_path, key = depth_first_search(source, dest, enc_polygons, turf_polygons)
+                    line = show_plot(res_path, "blue", 0.5)
+                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
                 case 3:
-                    res_path = greedy_bfs_search(source, dest, enc_polygons, turf_polygons)
-                    show_plot(res_path)
+                    res_path, key = greedy_bfs_search(source, dest, enc_polygons, turf_polygons)
+                    line = show_plot(res_path, "magenta", 0.5)
+                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
                 case 4:
-                    res_path = a_star_search(source, dest, enc_polygons, turf_polygons)
-                    show_plot(res_path)
+                    res_path, key = a_star_search(source, dest, enc_polygons, turf_polygons)
+                    line = show_plot(res_path, "orange", 0.5)
+                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
                 case 5:
-                    print("will crash the plot lol, prints everything into summary")
-                    # jank fix to not crash
-                    res_path = [Point(0, 0)]
-                    breadth_first_search(source, dest, enc_polygons, turf_polygons)
-                    reset_node(source, dest)
-                    reset_grid()
-                    depth_first_search(source, dest, enc_polygons, turf_polygons)
-                    reset_node(source, dest)
-                    reset_grid()
-                    greedy_bfs_search(source, dest, enc_polygons, turf_polygons)
-                    reset_node(source, dest)
-                    reset_grid()
+                    res_path, key = breadth_first_search(source, dest, enc_polygons, turf_polygons)
+                    line = show_plot(res_path, "red", 0.5)
+                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                    reset_everything(source, dest)
+
+                    res_path, key = depth_first_search(source, dest, enc_polygons, turf_polygons)
+                    line = show_plot(res_path, "blue", 0.5)
+                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                    reset_everything(source, dest)
+
+                    res_path, key = greedy_bfs_search(source, dest, enc_polygons, turf_polygons)
+                    line = show_plot(res_path, "magenta", 0.5)
+                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                    reset_everything(source, dest)
+
+                    res_path, key = a_star_search(source, dest, enc_polygons, turf_polygons)
+                    line = show_plot(res_path, "orange", 0.5)
+                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                    reset_everything(source, dest)
                 case 0:
                     exit_flag = True
                     res_path = [Point(0, 0)]
                 case _:
                     print("Invalid option. Please try again.\n")
-
-            reset_node(source, dest)
-            reset_grid()
-            clear_plot(res_path)
+            clear_plot(line)
+            reset_everything(source, dest)
         except ValueError:
             print("Please enter a valid integer.\n")        
     
@@ -393,4 +415,4 @@ if __name__ == "__main__":
     #     for i in range(len(res_path)-1):
     #         draw_result_line(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
     #         plt.pause(0.00001)
-    plt.show()
+    #plt.show()

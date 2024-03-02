@@ -11,7 +11,7 @@ class Point:
         self.directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         self.parent = None
         self.heuristic = 0
-        #check
+        #inside an enclosure 
         self.inside = False
 
     def __str__(self):
@@ -87,11 +87,15 @@ def draw_green_point(ax, x, y):
 def draw_line(ax, xs, ys):
     ax.plot(xs, ys, color='k')
 
-def draw_result_line(ax, xs, ys):
-    ax.plot(xs, ys, color='r')
+# def draw_result_line(ax, xs, ys):
+#     ax.plot(xs, ys, color='r')
 
 def draw_green_line(ax, xs, ys):
     ax.plot(xs, ys, color='g')
+
+## my functions
+def draw_result_line(ax, xs, ys, c, alpha):
+    return ax.plot(xs, ys, c, alpha=alpha)
 
 def clear_result_line(ax, xs, ys):
     ax.plot(xs, ys, color = '0.75', linestyle='dotted')
