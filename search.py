@@ -99,12 +99,13 @@ def search_actions(point, dest, enc_vertices, explored, a_star, turf_vertices):
         if a_star:
             # h(n) is straight line distance
             hn = distance(child_node, dest)
-            # g(n) is path cost 
+            # g(n) is path cost from the source to the point
             trash, gn = reconstruct_solution_path(point, True)
 
             child_node.parent = point
             child_node.heuristic = hn + gn
-        else:
+        else: 
+            # everything will use SLD 
             child_node.parent = point
             child_node.heuristic = distance(child_node, dest)
 
@@ -123,7 +124,8 @@ def breadth_first_search(source, dest, enc_vertices, turf_vertices):
     # return here
     if source.__eq__(dest):
         print_to_summary(key, 0, nodes_expanded)
-        return reconstruct_solution_path(node)
+        SOLUTION, path_cost = reconstruct_solution_path(node)
+        return SOLUTION, path_cost
 
     frontier = Queue()
     explored = [] # i couldn't use a set bc Point isn't iterable
@@ -163,7 +165,8 @@ def depth_first_search(source, dest, enc_vertices, turf_vertices):
     # return here
     if source.__eq__(dest):
         print_to_summary(key, 0, nodes_expanded)
-        return reconstruct_solution_path(node)
+        SOLUTION, path_cost = reconstruct_solution_path(node)
+        return SOLUTION, path_cost
 
     frontier = Stack()
     explored = [] # i couldn't use a set bc Point isn't iterable
@@ -203,7 +206,8 @@ def greedy_bfs_search(source, dest, enc_vertices, turf_vertices):
     # return here
     if source.__eq__(dest):
         print_to_summary(key, 0, nodes_expanded)
-        return reconstruct_solution_path(node)
+        SOLUTION, path_cost = reconstruct_solution_path(node)
+        return SOLUTION, path_cost
 
     frontier = PriorityQueue()
     reached = [] # i couldn't use a set bc Point isn't iterable
@@ -240,7 +244,8 @@ def a_star_search(source, dest, enc_vertices, turf_vertices):
     # return here
     if source.__eq__(dest):
         print_to_summary(key, 0, nodes_expanded)
-        return reconstruct_solution_path(node)
+        SOLUTION, path_cost = reconstruct_solution_path(node)
+        return SOLUTION, path_cost
 
     frontier = PriorityQueue()
     reached = [] # i couldn't use a set bc Point isn't iterable
@@ -326,8 +331,7 @@ if __name__ == "__main__":
     #     for i in range(len(res_path)-1):
     #         draw_result_white(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
     #         clear_result_line(ax, [res_path[i].x, res_path[i+1].x], [res_path[i].y, res_path[i+1].y])
-             
-
+            
     def show_plot(res_path, color, alpha):
         lines = []
         for i in range(len(res_path)-1):
