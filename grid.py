@@ -11,6 +11,8 @@ class Point:
         self.directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         self.parent = None
         self.heuristic = 0
+        #check
+        self.inside = False
 
     def __str__(self):
         return f'({self.x}, {self.y})'
