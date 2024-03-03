@@ -361,46 +361,52 @@ if __name__ == "__main__":
     while not exit_flag:
         try:
             print("Please enter an option: (Please keep resulting window open to rerun)")
+            print("*Each run will append to summary.txt with the name and iteration")
             print(*menu, sep="\n")
             user_input = int(input())
             res_path = [Point(0, 0)]
             match user_input:
                 case 1:
                     res_path, key = breadth_first_search(source, dest, enc_polygons, turf_polygons)
-                    line = show_plot(res_path, "red", 0.5)
-                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                    if res_path:
+                        line = show_plot(res_path, "red", 0.5)
+                        print(f"Ran: {key}, Number of times: {method_counters[key]}")
                 case 2:
                     res_path, key = depth_first_search(source, dest, enc_polygons, turf_polygons)
-                    line = show_plot(res_path, "blue", 0.5)
-                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                    if res_path:
+                        line = show_plot(res_path, "blue", 0.5)
+                        print(f"Ran: {key}, Number of times: {method_counters[key]}")
                 case 3:
                     res_path, key = greedy_bfs_search(source, dest, enc_polygons, turf_polygons)
-                    line = show_plot(res_path, "magenta", 0.5)
-                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                    if res_path:
+                        line = show_plot(res_path, "magenta", 0.5)
+                        print(f"Ran: {key}, Number of times: {method_counters[key]}")
                 case 4:
                     res_path, key = a_star_search(source, dest, enc_polygons, turf_polygons)
-                    line = show_plot(res_path, "orange", 0.5)
-                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                    if res_path:
+                        line = show_plot(res_path, "orange", 0.5)
+                        print(f"Ran: {key}, Number of times: {method_counters[key]}")
                 case 5:
-                    res_path, key = breadth_first_search(source, dest, enc_polygons, turf_polygons)
-                    line = show_plot(res_path, "red", 0.5)
-                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
-                    reset_everything(source, dest)
+                    if res_path:
+                        res_path, key = breadth_first_search(source, dest, enc_polygons, turf_polygons)
+                        line = show_plot(res_path, "red", 0.5)
+                        print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                        reset_everything(source, dest)
 
-                    res_path, key = depth_first_search(source, dest, enc_polygons, turf_polygons)
-                    line = show_plot(res_path, "blue", 0.5)
-                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
-                    reset_everything(source, dest)
+                        res_path, key = depth_first_search(source, dest, enc_polygons, turf_polygons)
+                        line = show_plot(res_path, "blue", 0.5)
+                        print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                        reset_everything(source, dest)
 
-                    res_path, key = greedy_bfs_search(source, dest, enc_polygons, turf_polygons)
-                    line = show_plot(res_path, "magenta", 0.5)
-                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
-                    reset_everything(source, dest)
+                        res_path, key = greedy_bfs_search(source, dest, enc_polygons, turf_polygons)
+                        line = show_plot(res_path, "magenta", 0.5)
+                        print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                        reset_everything(source, dest)
 
-                    res_path, key = a_star_search(source, dest, enc_polygons, turf_polygons)
-                    line = show_plot(res_path, "orange", 0.5)
-                    print(f"Ran: {key}, Number of times: {method_counters[key]}")
-                    reset_everything(source, dest)
+                        res_path, key = a_star_search(source, dest, enc_polygons, turf_polygons)
+                        line = show_plot(res_path, "orange", 0.5)
+                        print(f"Ran: {key}, Number of times: {method_counters[key]}")
+                        reset_everything(source, dest)
                 case 0:
                     exit_flag = True
                     res_path = [Point(0, 0)]
@@ -408,6 +414,8 @@ if __name__ == "__main__":
                     print("Invalid option. Please try again.\n")
             if line:
                 clear_plot(line)
+            if not res_path:
+                print(f"Failed to find the destination")
             reset_everything(source, dest)
         except ValueError:
             print("Please enter a valid integer.\n")        
