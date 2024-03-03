@@ -190,6 +190,7 @@ def depth_first_search(source, dest, enc_vertices, turf_vertices):
             return SOLUTION, key
         
         for child in node.children:
+            # cycle check
             if child not in explored or child not in frontier:
                 frontier.push(child)
                 explored.append(child)
