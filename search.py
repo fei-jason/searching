@@ -137,7 +137,6 @@ def breadth_first_search(source, dest, enc_vertices, turf_vertices):
             return SOLUTION, key
         
         node = frontier.pop()
-        #print(f"{nodes_expanded}")
         nodes_expanded += 1
 
         actions = search_actions(node, dest, enc_vertices, explored, False, turf_vertices)
@@ -282,9 +281,9 @@ if __name__ == "__main__":
     source = Point(8,10)
     dest = Point(43,45)
 
-    source_copy = source
-    dest_copy = dest
-    #dest = Point(8,10)
+    # mine
+    # source = Point(12,47)
+    # dest = Point(40,3)
 
     enc_polygons = []
     turf_polygons = []
@@ -407,12 +406,12 @@ if __name__ == "__main__":
                     res_path = [Point(0, 0)]
                 case _:
                     print("Invalid option. Please try again.\n")
-            clear_plot(line)
+            if line:
+                clear_plot(line)
             reset_everything(source, dest)
         except ValueError:
             print("Please enter a valid integer.\n")        
     
-
     # res_path = [Point(24,17), Point(25,17), Point(26,17), Point(27,17),  
     #             Point(28,17), Point(28,18), Point(28,19), Point(28,20)]
     # if not exit_flag:

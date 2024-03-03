@@ -1,0 +1,16 @@
+Name: BFS1
+Path cost: 82
+Nodes expanded: 2012
+
+Name: DFS1
+Path cost: 758
+Nodes expanded: 1239
+
+Name: GBFS1
+Path cost: 94.0
+Nodes expanded: 101
+
+Name: A*1
+Path cost: 85.5
+Nodes expanded: 1650
+
